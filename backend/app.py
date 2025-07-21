@@ -242,6 +242,35 @@ def create_app():
             'author': ann.user.name
         } for ann in announcements])
 
+    @app.route('/admin/create-initial-hr', methods=['POST'])
+    def create_initial_hr():
+        # This key MUST be set as an environment variable on your Render server.
+        secret_key = os.environ.get('INITIAL_HR_CREATION_KEY')
+        data = request.json
+        
+        # 1. Check for the secret key
+        if not secret_key or data.get('secret_key') != secret_key:
+            return jsonify({'message': 'Unauthorized.'}), 403
+
+        # 2. Check if an HR user already exists
+        if User.query.filter_by(is_hr=True).first():
+            return jsonify({'message': 'An HR user already exists. This endpoint is disabled.'}), 403
+
+        # 3. Get user details from the request
+        name = data.get('name')
+        email = data.get('email')
+        password = data.get('password')
+
+        if not all([name, email, password]):
+            return jsonify({'message': 'Name, email, and password are required.'}), 400
+
+        # 4. Create the HR user
+        hashed_pw = bcrypt.generate_password_hash(password).decode('utf-8')
+        new_hr_user = User(name=name, email=email, password=hashed_pw, is_hr=True)
+        db.session.add(new_hr_user)
+        db.session.commit()
+
+        return jsonify({'message': f'HR user {name} created successfully. Please remove the INITIAL_HR_CREATION_KEY for security.'}), 201
 
     # --- Leave Management Routes ---
 
@@ -296,6 +325,7 @@ def create_app():
         } for req in requests])
         
     # ✅ FIXED: Re-added the missing /holidays route
+
     @app.route('/holidays/<month>', methods=['GET'])
     @token_required
     def get_holidays(current_user, month):
