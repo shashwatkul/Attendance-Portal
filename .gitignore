@@ -1,1 +1,14 @@
 node_modules
+# Python
+.venv/
+__pycache__/
+*.pyc
+instance/
+
+# Node / React
+frontend/node_modules/
+frontend/build/
+.env
+
+# IDE files
+.vscode/
