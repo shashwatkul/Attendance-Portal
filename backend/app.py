@@ -48,7 +48,7 @@ def create_app():
     app = Flask(__name__, instance_relative_config=True)
     CORS(
         app, 
-        origins="https://attendancepaypanda.netlify.app",
+        origins="*", # WARNING: For debugging only.
         supports_credentials=True,
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["Authorization", "Content-Type"]
