@@ -46,13 +46,7 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
-    CORS(
-        app, 
-        origins="*", # WARNING: For debugging only.
-        supports_credentials=True,
-        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type"]
-    )
+    CORS(app, resources={r"/*": {"origins": "https://attendancepaypanda.netlify.app"}}, supports_credentials=True)
 
     upload_path = os.path.join(app.instance_path, UPLOAD_FOLDER)
     os.makedirs(upload_path, exist_ok=True)
