@@ -46,12 +46,12 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
-    
+    CORS(app, resources={r"/*": {"origins": "https://attendancepaypanda.netlify.app"}}, supports_credentials=True)
+
     upload_path = os.path.join(app.instance_path, UPLOAD_FOLDER)
     os.makedirs(upload_path, exist_ok=True)
     
     app.config['UPLOAD_FOLDER'] = upload_path
-    CORS(app, supports_credentials=True)
     app.config['SECRET_KEY'] =  os.environ.get('SECRET_KEY')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -97,16 +97,7 @@ def create_app():
         data = request.json
         user = User.query.filter_by(email=data['email']).first()
         
-        # --- TEMPORARY DEBUGGING ---
-        if user:
-            print(f"User found: {user.email}")
-            print(f"Stored Hash: {user.password}")
-            is_valid = bcrypt.check_password_hash(user.password, data['password'])
-            print(f"Password check result: {is_valid}")
-        else:
-            print(f"No user found for email: {data['email']}")
-        # --- END DEBUGGING ---
-
+        # ✅ REMOVED: Temporary debugging code has been removed for production.
         if user and bcrypt.check_password_hash(user.password, data['password']):
             token = jwt.encode({
                 'user_id': user.id, 'name': user.name, 'email': user.email, 'is_hr': user.is_hr,
@@ -115,7 +106,6 @@ def create_app():
             return jsonify(token=token, user={'name': user.name, 'email': user.email, 'is_hr': user.is_hr})
         
         return jsonify(message='Invalid credentials'), 401
-
     
     
     @app.route('/uploads/<filename>')
