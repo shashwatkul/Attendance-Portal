@@ -99,21 +99,25 @@ def create_app():
 
     # --- Routes ---
     
-    @app.route('/login', methods=['POST'])
+    @app.route('/login', methods=['POST', 'OPTIONS'])
     def login():
+        if request.method == 'OPTIONS':
+            return '', 200  # Handle CORS preflight request
         data = request.json
         user = User.query.filter_by(email=data['email']).first()
         
-        # ✅ REMOVED: Temporary debugging code has been removed for production.
         if user and bcrypt.check_password_hash(user.password, data['password']):
             token = jwt.encode({
-                'user_id': user.id, 'name': user.name, 'email': user.email, 'is_hr': user.is_hr,
+                'user_id': user.id,
+                'name': user.name,
+                'email': user.email,
+                'is_hr': user.is_hr,
                 'exp': datetime.utcnow() + timedelta(hours=24)
             }, app.config['SECRET_KEY'], algorithm='HS256')
             return jsonify(token=token, user={'name': user.name, 'email': user.email, 'is_hr': user.is_hr})
-        
+
         return jsonify(message='Invalid credentials'), 401
-    
+
     
     @app.route('/uploads/<filename>')
     def uploaded_file(filename):
