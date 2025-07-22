@@ -96,13 +96,26 @@ def create_app():
     def login():
         data = request.json
         user = User.query.filter_by(email=data['email']).first()
+        
+        # --- TEMPORARY DEBUGGING ---
+        if user:
+            print(f"User found: {user.email}")
+            print(f"Stored Hash: {user.password}")
+            is_valid = bcrypt.check_password_hash(user.password, data['password'])
+            print(f"Password check result: {is_valid}")
+        else:
+            print(f"No user found for email: {data['email']}")
+        # --- END DEBUGGING ---
+
         if user and bcrypt.check_password_hash(user.password, data['password']):
             token = jwt.encode({
                 'user_id': user.id, 'name': user.name, 'email': user.email, 'is_hr': user.is_hr,
                 'exp': datetime.utcnow() + timedelta(hours=24)
             }, app.config['SECRET_KEY'], algorithm='HS256')
             return jsonify(token=token, user={'name': user.name, 'email': user.email, 'is_hr': user.is_hr})
+        
         return jsonify(message='Invalid credentials'), 401
+
     
     
     @app.route('/uploads/<filename>')
