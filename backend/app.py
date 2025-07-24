@@ -58,24 +58,13 @@ def create_app():
     app.config['UPLOAD_FOLDER'] = upload_path
 
     # --- Initialize Extensions ---
-    CORS(app, supports_credentials=True)
+    CORS(app, origins=["https://attendancepaypanda.netlify.app", "http://localhost:3000"], supports_credentials=True)
 
     db.init_app(app)
     bcrypt.init_app(app)
     with app.app_context():
         db.create_all()
 
-    
-    # ✅ FINAL FIX: Manually handle all OPTIONS preflight requests
-    # This function runs before every request to the application.
-    @app.before_request
-    def handle_preflight():
-        if request.method == "OPTIONS":
-            res = make_response()
-            res.headers.add('Access-Control-Allow-Origin', 'https://attendancepaypanda.netlify.app')
-            res.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-            res.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-            return res
 
     # --- Decorators (remain the same) ---
     def token_required(f):
