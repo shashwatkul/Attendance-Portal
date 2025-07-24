@@ -58,7 +58,17 @@ def create_app():
     app.config['UPLOAD_FOLDER'] = upload_path
 
     # --- Initialize Extensions ---
-    CORS(app, origins="*", supports_credentials=True)
+    CORS(
+    app,
+    origins=[
+        "http://localhost:3000",                      # local frontend dev
+        "https://attendancepaypanda.netlify.app"      # deployed frontend
+    ],
+    supports_credentials=True,
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"]
+)
+
     db.init_app(app)
     bcrypt.init_app(app)
     with app.app_context():
