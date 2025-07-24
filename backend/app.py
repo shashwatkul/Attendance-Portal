@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 import io
 import csv
 import math 
+import pytz
 
 from backend.models import db, User, Attendance, LeaveRequest, Announcement, Message
 
@@ -29,6 +30,8 @@ def allowed_file(filename):
 OFFICE_LATITUDE = 28.583417
 OFFICE_LONGITUDE = 77.314006
 MAX_DISTANCE_METERS = 200
+IST = pytz.timezone('Asia/Kolkata')
+
 
 def calculate_distance(lat1, lon1, lat2, lon2):
     """
@@ -201,27 +204,28 @@ def create_app():
             return jsonify(message=f"You are approximately {int(distance)} meters away from the office. You must be within {MAX_DISTANCE_METERS} meters to mark attendance."), 403 # 403 Forbidden
 
         # If distance check passes, proceed with the original logic
-        today = datetime.now().date()
+        now_ist = datetime.now(IST)
+        today = now_ist.date()
+        
         if Attendance.query.filter_by(user_id=current_user.id, date=today).first():
             return jsonify(message="Attendance already marked for today"), 409
         
-        record = Attendance(user_id=current_user.id, date=today, status='present', login_time=datetime.now().time())
+        record = Attendance(user_id=current_user.id, date=today, status='present', login_time=now_ist.time())
         db.session.add(record)
         db.session.commit()
-        return jsonify(message="Attendance marked successfully. You are within the allowed distance."), 201
+        return jsonify(message="Attendance marked successfully."), 201
     
     @app.route('/attendance/logout', methods=['POST'])
     @token_required
     def mark_logout(current_user):
-        now_system = datetime.now()
-        today = now_system.date()
+        # ✅ MODIFIED: Use IST for timestamps
+        now_ist = datetime.now(IST)
+        today = now_ist.date()
         attendance = Attendance.query.filter_by(user_id=current_user.id, date=today).first()
-        if not attendance:
-            return jsonify(message="Login has not been marked for today"), 404
-        if attendance.logout_time:
-            return jsonify(message="Logout already marked for today"), 409
+        if not attendance: return jsonify(message="Login has not been marked for today"), 404
+        if attendance.logout_time: return jsonify(message="Logout already marked for today"), 409
         
-        attendance.logout_time = now_system.time()
+        attendance.logout_time = now_ist.time()
         db.session.commit()
         return jsonify(message="Logout time updated successfully")
 
