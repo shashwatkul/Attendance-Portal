@@ -46,22 +46,19 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
-    CORS(
-        app, 
-        resources={r"/*": {"origins": "https://attendancepaypanda.netlify.app"}}, 
-        supports_credentials=True,
-        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type"]
-    )
 
-
+    # --- Configuration Setup ---
+    # ✅ FIXED: All configurations are now set before initializing extensions.
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'mysecretkey')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', f'sqlite:///{os.path.join(app.instance_path, "users.db")}')
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    
     upload_path = os.path.join(app.instance_path, UPLOAD_FOLDER)
     os.makedirs(upload_path, exist_ok=True)
-    
     app.config['UPLOAD_FOLDER'] = upload_path
-    app.config['SECRET_KEY'] =  os.environ.get('SECRET_KEY')
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    # --- Initialize Extensions ---
+    CORS(app, origins="*", supports_credentials=True)
     db.init_app(app)
     bcrypt.init_app(app)
     with app.app_context():
